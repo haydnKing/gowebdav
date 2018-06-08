@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+func closeBody(ret *http.Response) {
+	if ret != nil && ret.Body != nil {
+		ret.Body.Close()
+	}
+}
+
 func (c *Client) req(method, path string, body io.Reader, intercept func(*http.Request)) (req *http.Response, err error) {
 	r, err := http.NewRequest(method, PathEscape(Join(c.root, path)), body)
 	if err != nil {
@@ -30,7 +36,7 @@ func (c *Client) req(method, path string, body io.Reader, intercept func(*http.R
 
 func (c *Client) mkcol(path string) int {
 	rs, err := c.req("MKCOL", path, nil, nil)
-	defer rs.Body.Close()
+	defer closeBody(rs)
 	if err != nil {
 		return 400
 	}
@@ -61,7 +67,7 @@ func (c *Client) propfind(path string, self bool, body string, resp interface{},
 		// TODO add support for 'gzip,deflate;q=0.8,q=0.7'
 		rq.Header.Add("Accept-Encoding", "")
 	})
-	defer rs.Body.Close()
+	defer closeBody(rs)
 	if err != nil {
 		return err
 	}
@@ -109,7 +115,7 @@ func (c *Client) copymove(method string, oldpath string, newpath string, overwri
 
 func (c *Client) put(path string, stream io.Reader) int {
 	rs, err := c.req("PUT", path, stream, nil)
-	defer rs.Body.Close()
+	defer closeBody(rs)
 	if err != nil {
 		return 400
 	}
